@@ -1,17 +1,84 @@
 using System.Windows.Forms;
 using CommandLine.Utility;
+using Snap2HTML.Infrastructure;
+using Snap2HTML.Presenters;
+using Snap2HTML.Services;
 
 namespace Snap2HTML;
 
-public partial class frmMain : Form
+public partial class frmMain : Form, IMainFormView
 {
     private bool _initDone;
     private bool _runningAutomated;
+    private MainFormPresenter? _presenter;
 
     public frmMain()
     {
         InitializeComponent();
+        InitializePresenter();
     }
+
+    private void InitializePresenter()
+    {
+        var fileSystem = new FileSystemAbstraction();
+        var applicationPath = Path.GetDirectoryName(Application.ExecutablePath) ?? string.Empty;
+        var templateProvider = new TemplateProvider(fileSystem, applicationPath);
+        var folderScanner = new FolderScanner(fileSystem);
+        var htmlGenerator = new HtmlGenerator(templateProvider, fileSystem);
+
+        _presenter = new MainFormPresenter(folderScanner, htmlGenerator, this);
+    }
+
+    #region IMainFormView Implementation
+
+    public void UpdateProgress(MainFormProgress progress)
+    {
+        if (InvokeRequired)
+        {
+            Invoke(new Action(() => UpdateProgress(progress)));
+            return;
+        }
+
+        toolStripStatusLabel1.Text = progress.StatusMessage;
+    }
+
+    public void ShowError(string title, string message)
+    {
+        if (InvokeRequired)
+        {
+            Invoke(new Action(() => ShowError(title, message)));
+            return;
+        }
+
+        MessageBox.Show(message, title, MessageBoxButtons.OK, MessageBoxIcon.Error);
+    }
+
+    public void SetBusyState(bool isBusy)
+    {
+        if (InvokeRequired)
+        {
+            Invoke(new Action(() => SetBusyState(isBusy)));
+            return;
+        }
+
+        if (isBusy)
+        {
+            Cursor.Current = Cursors.WaitCursor;
+            Text = "Snap2HTML (Working... Press Escape to Cancel)";
+            tabControl1.Enabled = false;
+        }
+        else
+        {
+            Cursor.Current = Cursors.Default;
+            tabControl1.Enabled = true;
+            Text = "Snap2HTML";
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+        }
+    }
+
+    #endregion
 
     private void frmMain_Load(object sender, EventArgs e)
     {
@@ -137,7 +204,7 @@ public partial class frmMain : Form
 
     private void frmMain_FormClosing(object sender, FormClosingEventArgs e)
     {
-        if (backgroundWorker.IsBusy) e.Cancel = true;
+        if (_presenter?.IsProcessing == true) e.Cancel = true;
 
         if (!_runningAutomated) // Don't save settings when automated through command line
         {
@@ -205,7 +272,7 @@ public partial class frmMain : Form
         StartProcessing(settings);
     }
 
-    private void StartProcessing(SnapSettings settings)
+    private async void StartProcessing(SnapSettings settings)
     {
         // Ensure source path format
         settings.RootFolder = Path.GetFullPath(settings.RootFolder);
@@ -239,12 +306,21 @@ public partial class frmMain : Form
             }
         }
 
-        Cursor.Current = Cursors.WaitCursor;
-        Text = "Snap2HTML (Working... Press Escape to Cancel)";
-        tabControl1.Enabled = false;
-        backgroundWorker.RunWorkerAsync(argument: settings);
+        if (_presenter == null) return;
+
+        var result = await _presenter.CreateSnapshotAsync(
+            settings,
+            Application.ProductName ?? "Snap2HTML",
+            Application.ProductVersion ?? "1.0.0");
+
+        // Quit when finished if automated via command line
+        if (_runningAutomated)
+        {
+            Application.Exit();
+        }
     }
 
+    // Keep these for backward compatibility with designer - they delegate to presenter
     private void backgroundWorker_ProgressChanged(object sender, System.ComponentModel.ProgressChangedEventArgs e)
     {
         toolStripStatusLabel1.Text = e.UserState?.ToString() ?? string.Empty;
@@ -252,18 +328,7 @@ public partial class frmMain : Form
 
     private void backgroundWorker_RunWorkerCompleted(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
     {
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
-
-        Cursor.Current = Cursors.Default;
-        tabControl1.Enabled = true;
-        Text = "Snap2HTML";
-
-        // Quit when finished if automated via command line
-        if (_runningAutomated)
-        {
-            Application.Exit();
-        }
+        // Legacy handler - actual work is done by presenter
     }
 
     private void chkLinkFiles_CheckedChanged(object sender, EventArgs e)
@@ -355,11 +420,11 @@ public partial class frmMain : Form
     // Escape to cancel
     private void frmMain_KeyUp(object sender, KeyEventArgs e)
     {
-        if (backgroundWorker.IsBusy)
+        if (_presenter?.IsProcessing == true)
         {
             if (e.KeyCode == Keys.Escape)
             {
-                backgroundWorker.CancelAsync();
+                _presenter.CancelOperation();
             }
         }
         else
