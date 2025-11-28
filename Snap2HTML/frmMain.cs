@@ -308,7 +308,7 @@ public partial class frmMain : Form, IMainFormView
 
         if (_presenter == null) return;
 
-        var result = await _presenter.CreateSnapshotAsync(
+        _ = await _presenter.CreateSnapshotAsync(
             settings,
             Application.ProductName ?? "Snap2HTML",
             Application.ProductVersion ?? "1.0.0");

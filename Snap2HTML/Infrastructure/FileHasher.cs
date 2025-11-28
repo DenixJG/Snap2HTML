@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 
@@ -47,7 +48,7 @@ public class FileHasher : IFileHasher
             CancellationToken = cancellationToken
         };
 
-        var results = new System.Collections.Concurrent.ConcurrentQueue<FileHashResult>();
+        var results = new ConcurrentQueue<FileHashResult>();
 
         await Parallel.ForEachAsync(files, parallelOptions, async (filePath, ct) =>
         {
