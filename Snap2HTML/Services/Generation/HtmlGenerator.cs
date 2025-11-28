@@ -1,8 +1,11 @@
 using System.Diagnostics;
 using System.Text;
-using Snap2HTML.Infrastructure;
+using Snap2HTML.Core.Models;
+using Snap2HTML.Core.Utilities;
+using Snap2HTML.Infrastructure.FileSystem;
+using Snap2HTML.Services.Scanning;
 
-namespace Snap2HTML.Services;
+namespace Snap2HTML.Services.Generation;
 
 /// <summary>
 /// Implementation of IHtmlGenerator that creates HTML output from scanned folder content.
@@ -151,7 +154,7 @@ public class HtmlGenerator : IHtmlGenerator
             var linkRoot = options.LinkRoot.Replace(@"\", "/");
 
             // "file://" is needed in the browser if path begins with drive letter, else it should not be used
-            if (Utils.IsWildcardMatch(@"?:/*", linkRoot, false))
+            if (StringUtils.IsWildcardMatch(@"?:/*", linkRoot, false))
             {
                 sbTemplate.Replace("[LINK PROTOCOL]", @"file://");
             }
@@ -241,14 +244,14 @@ public class HtmlGenerator : IHtmlGenerator
             result.Append($"D.p([{lineBreakSymbol}");
 
             var sDirWithForwardSlash = currentDir.GetFullPath().Replace(@"\", "/");
-            result.Append($"\"{Utils.MakeCleanJsString(sDirWithForwardSlash)}*0*{currentDir.GetProp("Modified")}\",{lineBreakSymbol}");
+            result.Append($"\"{StringUtils.MakeCleanJsString(sDirWithForwardSlash)}*0*{currentDir.GetProp("Modified")}\",{lineBreakSymbol}");
 
             long dirSize = 0;
 
             foreach (var currentFile in currentDir.Files)
             {
-                result.Append($"\"{Utils.MakeCleanJsString(currentFile.Name)}*{currentFile.GetProp("Size")}*{currentFile.GetProp("Modified")}\",{lineBreakSymbol}");
-                dirSize += Utils.ParseLong(currentFile.GetProp("Size"));
+                result.Append($"\"{StringUtils.MakeCleanJsString(currentFile.Name)}*{currentFile.GetProp("Size")}*{currentFile.GetProp("Modified")}\",{lineBreakSymbol}");
+                dirSize += StringUtils.ParseLong(currentFile.GetProp("Size"));
             }
 
             result.Append($"{dirSize},{lineBreakSymbol}");

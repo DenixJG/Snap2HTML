@@ -1,4 +1,6 @@
-using Snap2HTML.Services;
+using Snap2HTML.Core.Models;
+using Snap2HTML.Services.Generation;
+using Snap2HTML.Services.Scanning;
 
 namespace Snap2HTML.Presenters;
 

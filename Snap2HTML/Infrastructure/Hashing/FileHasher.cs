@@ -1,8 +1,9 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
+using Snap2HTML.Infrastructure.FileSystem;
 
-namespace Snap2HTML.Infrastructure;
+namespace Snap2HTML.Infrastructure.Hashing;
 
 /// <summary>
 /// Implementation of IFileHasher using SHA256 with parallel processing support.

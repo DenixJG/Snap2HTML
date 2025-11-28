@@ -1,4 +1,6 @@
-namespace Snap2HTML.Services;
+using Snap2HTML.Core.Models;
+
+namespace Snap2HTML.Services.Scanning;
 
 /// <summary>
 /// Options for folder scanning operations.

@@ -1,4 +1,4 @@
-namespace Snap2HTML.Infrastructure;
+namespace Snap2HTML.Infrastructure.FileSystem;
 
 /// <summary>
 /// Abstraction over file system operations to enable testing and future extensibility.

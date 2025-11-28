@@ -1,11 +1,16 @@
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Snap2HTML;
+namespace Snap2HTML.Core.Utilities;
 
-static class Utils
+/// <summary>
+/// String utility methods for the application.
+/// </summary>
+public static class StringUtils
 {
-    // Hack to sort folders correctly even if they have spaces/periods in them
+    /// <summary>
+    /// Sorts a list of directories correctly even if they have spaces/periods in them.
+    /// </summary>
     public static List<string> SortDirList(List<string> lstDirs)
     {
         for (var n = 0; n < lstDirs.Count; n++)
@@ -25,8 +30,12 @@ static class Utils
         return lstDirs;
     }
 
-    // Replaces characters that may appear in filenames/paths that have special meaning to JavaScript
-    // Info on u2028/u2029: https://en.wikipedia.org/wiki/Newline#Unicode
+    /// <summary>
+    /// Replaces characters that may appear in filenames/paths that have special meaning to JavaScript.
+    /// </summary>
+    /// <remarks>
+    /// Info on u2028/u2029: https://en.wikipedia.org/wiki/Newline#Unicode
+    /// </remarks>
     public static string MakeCleanJsString(string s) =>
         s.Replace("\\", "\\\\")
          .Replace("&", "&amp;")
@@ -34,7 +43,9 @@ static class Utils
          .Replace("\u2029", "")
          .Replace("\u0004", "");
 
-    // Test string for matches against a wildcard pattern. Use ? and * as wildcards. (Wrapper around RegEx)
+    /// <summary>
+    /// Tests a string for matches against a wildcard pattern. Use ? and * as wildcards.
+    /// </summary>
     public static bool IsWildcardMatch(string wildcard, string text, bool casesensitive)
     {
         var sb = new StringBuilder(wildcard.Length + 10);
@@ -66,9 +77,15 @@ static class Utils
         return regex.IsMatch(text);
     }
 
+    /// <summary>
+    /// Converts a DateTime to Unix timestamp.
+    /// </summary>
     public static int ToUnixTimestamp(DateTime value) =>
         (int)Math.Truncate((value.ToUniversalTime() - new DateTime(1970, 1, 1)).TotalSeconds);
 
+    /// <summary>
+    /// Parses a string to long, returning 0 if parsing fails.
+    /// </summary>
     public static long ParseLong(string s) =>
         long.TryParse(s, out var num) ? num : 0;
 }

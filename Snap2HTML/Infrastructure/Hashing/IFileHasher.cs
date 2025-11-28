@@ -1,4 +1,4 @@
-namespace Snap2HTML.Infrastructure;
+namespace Snap2HTML.Infrastructure.Hashing;
 
 /// <summary>
 /// Options for file hashing operations.

@@ -1,7 +1,9 @@
 using System.Diagnostics;
-using Snap2HTML.Infrastructure;
+using Snap2HTML.Core.Models;
+using Snap2HTML.Core.Utilities;
+using Snap2HTML.Infrastructure.FileSystem;
 
-namespace Snap2HTML.Services;
+namespace Snap2HTML.Services.Scanning;
 
 /// <summary>
 /// Implementation of IFolderScanner that scans folders for files and metadata.
@@ -43,7 +45,7 @@ public class FolderScanner : IFolderScanner
                 return result;
             }
 
-            dirs = Utils.SortDirList(dirs);
+            dirs = StringUtils.SortDirList(dirs);
 
             // Parse each folder
             var totFiles = 0;
@@ -110,8 +112,8 @@ public class FolderScanner : IFolderScanner
 
         try
         {
-            modifiedDate = Utils.ToUnixTimestamp(_fileSystem.GetLastWriteTime(dirName).ToLocalTime()).ToString();
-            createdDate = Utils.ToUnixTimestamp(_fileSystem.GetCreationTime(dirName).ToLocalTime()).ToString();
+            modifiedDate = StringUtils.ToUnixTimestamp(_fileSystem.GetLastWriteTime(dirName).ToLocalTime()).ToString();
+            createdDate = StringUtils.ToUnixTimestamp(_fileSystem.GetCreationTime(dirName).ToLocalTime()).ToString();
         }
         catch (Exception ex)
         {
@@ -197,8 +199,8 @@ public class FolderScanner : IFolderScanner
 
             try
             {
-                modifiedDate = Utils.ToUnixTimestamp(fi.LastWriteTime.ToLocalTime()).ToString();
-                createdDate = Utils.ToUnixTimestamp(fi.CreationTime.ToLocalTime()).ToString();
+                modifiedDate = StringUtils.ToUnixTimestamp(fi.LastWriteTime.ToLocalTime()).ToString();
+                createdDate = StringUtils.ToUnixTimestamp(fi.CreationTime.ToLocalTime()).ToString();
             }
             catch (Exception ex)
             {
@@ -287,7 +289,7 @@ public class FolderScanner : IFolderScanner
             foreach (var file in folder.Files)
             {
                 result.TotalFiles++;
-                result.TotalSize += Utils.ParseLong(file.GetProp("Size"));
+                result.TotalSize += StringUtils.ParseLong(file.GetProp("Size"));
             }
         }
     }

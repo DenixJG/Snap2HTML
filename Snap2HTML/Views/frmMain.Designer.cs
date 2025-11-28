@@ -1,4 +1,4 @@
-﻿namespace Snap2HTML
+﻿namespace Snap2HTML.Views
 {
     partial class frmMain
     {
@@ -71,7 +71,6 @@
 			this.labelAboutTitle = new System.Windows.Forms.Label();
 			this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
 			this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
-			this.backgroundWorker = new System.ComponentModel.BackgroundWorker();
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
 			this.statusStrip1.SuspendLayout();
 			this.tabControl1.SuspendLayout();
@@ -540,14 +539,6 @@
 			this.folderBrowserDialog1.RootFolder = System.Environment.SpecialFolder.MyComputer;
 			this.folderBrowserDialog1.ShowNewFolderButton = false;
 			// 
-			// backgroundWorker
-			// 
-			this.backgroundWorker.WorkerReportsProgress = true;
-			this.backgroundWorker.WorkerSupportsCancellation = true;
-			this.backgroundWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker_DoWork);
-			this.backgroundWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.backgroundWorker_ProgressChanged);
-			this.backgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.backgroundWorker_RunWorkerCompleted);
-			// 
 			// frmMain
 			// 
 			this.AcceptButton = this.cmdCreate;
@@ -608,7 +599,6 @@
 		private System.Windows.Forms.Label labelAboutSoftware;
 		private System.Windows.Forms.Label labelAboutVersion;
 		private System.Windows.Forms.Label labelAboutTitle;
-        private System.ComponentModel.BackgroundWorker backgroundWorker;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.CheckBox chkOpenOutput;
         private System.Windows.Forms.TextBox txtLinkRoot;

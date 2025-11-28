@@ -1,10 +1,13 @@
 using System.Windows.Forms;
-using CommandLine.Utility;
-using Snap2HTML.Infrastructure;
+using Snap2HTML.Core.Models;
+using Snap2HTML.Core.Utilities;
+using Snap2HTML.Infrastructure.FileSystem;
 using Snap2HTML.Presenters;
-using Snap2HTML.Services;
+using Snap2HTML.Services.CommandLine;
+using Snap2HTML.Services.Generation;
+using Snap2HTML.Services.Scanning;
 
-namespace Snap2HTML;
+namespace Snap2HTML.Views;
 
 public partial class frmMain : Form, IMainFormView
 {
@@ -281,7 +284,7 @@ public partial class frmMain : Form, IMainFormView
             settings.RootFolder = settings.RootFolder[..^1];
 
         // Add backslash to path if only letter and colon eg "c:"
-        if (Utils.IsWildcardMatch("?:", settings.RootFolder, false))
+        if (StringUtils.IsWildcardMatch("?:", settings.RootFolder, false))
             settings.RootFolder += @"\";
 
         // Add slash or backslash to end of link (in cases where it is clear that we can)
@@ -294,7 +297,7 @@ public partial class frmMain : Form, IMainFormView
                     settings.LinkRoot += @"/";
                 }
 
-                if (Utils.IsWildcardMatch("?:*", settings.LinkRoot, false)) // Local disk
+                if (StringUtils.IsWildcardMatch("?:*", settings.LinkRoot, false)) // Local disk
                 {
                     settings.LinkRoot += @"\";
                 }
@@ -318,17 +321,6 @@ public partial class frmMain : Form, IMainFormView
         {
             Application.Exit();
         }
-    }
-
-    // Keep these for backward compatibility with designer - they delegate to presenter
-    private void backgroundWorker_ProgressChanged(object sender, System.ComponentModel.ProgressChangedEventArgs e)
-    {
-        toolStripStatusLabel1.Text = e.UserState?.ToString() ?? string.Empty;
-    }
-
-    private void backgroundWorker_RunWorkerCompleted(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
-    {
-        // Legacy handler - actual work is done by presenter
     }
 
     private void chkLinkFiles_CheckedChanged(object sender, EventArgs e)
