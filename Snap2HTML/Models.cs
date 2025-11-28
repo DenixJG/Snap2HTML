@@ -1,95 +1,62 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+namespace Snap2HTML;
 
-namespace Snap2HTML
+public class SnapSettings
 {
-	public class SnapSettings
-	{
-		public string rootFolder { get; set; }
-		public string title { get; set; }
-		public string outputFile { get; set; }
-		public bool skipHiddenItems { get; set; }
-		public bool skipSystemItems { get; set; }
-		public bool openInBrowser { get; set; }
-		public bool linkFiles { get; set; }
-		public string linkRoot { get; set; }
+    public string RootFolder { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
+    public string OutputFile { get; set; } = string.Empty;
+    public bool SkipHiddenItems { get; set; } = true;
+    public bool SkipSystemItems { get; set; } = true;
+    public bool OpenInBrowser { get; set; }
+    public bool LinkFiles { get; set; }
+    public string LinkRoot { get; set; } = string.Empty;
+}
 
-		public SnapSettings()
-		{
-			this.skipHiddenItems = true;
-			this.skipSystemItems = true;
-			this.openInBrowser = false;
-			this.linkFiles = false;
-			this.linkRoot = "";
-		}
-	}
+public class SnappedFile
+{
+    public SnappedFile(string name)
+    {
+        Name = name;
+        Properties = [];
+    }
 
+    public string Name { get; set; }
+    public Dictionary<string, string> Properties { get; set; }
 
-	public class SnappedFile
-	{
-		public SnappedFile( string name )
-		{
-			this.Name = name;
-			this.Properties = new Dictionary<string, string>();
-		}
+    public string GetProp(string key) =>
+        Properties.TryGetValue(key, out var value) ? value : string.Empty;
+}
 
-		public string Name { get; set; }
-		public Dictionary<string, string> Properties { get; set; }
+public class SnappedFolder
+{
+    public SnappedFolder(string name, string path)
+    {
+        Name = name;
+        Path = path;
+        Properties = [];
+        Files = [];
+    }
 
-		public string GetProp( string key )
-		{
-			if( this.Properties.ContainsKey( key ) )
-				return this.Properties[key];
-			else
-				return "";
-		}
+    public string Name { get; set; }
+    public string Path { get; set; }
+    public Dictionary<string, string> Properties { get; set; }
+    public List<SnappedFile> Files { get; set; }
 
-	}
+    public string GetFullPath()
+    {
+        var path = Path.EndsWith(@"\")
+            ? Path + Name
+            : Path + @"\" + Name;
 
-	public class SnappedFolder
-	{
-		public SnappedFolder( string name, string path )
-		{
-			this.Name = name;
-			this.Path = path;
-			this.Properties = new Dictionary<string, string>();
-			this.Files = new List<SnappedFile>();
-		}
+        // Remove trailing backslash except for drive letters
+        if (path.EndsWith(@"\") && !Utils.IsWildcardMatch(@"?:\", path, false))
+        {
+            path = path[..^1];
+        }
 
-		public string Name { get; set; }
-		public string Path { get; set; }
-		public Dictionary<string, string> Properties { get; set; }
-		public List<SnappedFile> Files { get; set; }
+        return path;
+    }
 
-		public string GetFullPath()
-		{
-			string path;
-
-			if( this.Path.EndsWith( @"\" ) )
-				path = this.Path + this.Name;
-			else
-				path = this.Path + @"\" + this.Name;
-
-			if( path.EndsWith( @"\" ) ) // remove trailing backslash
-			{	
-				if(!Utils.IsWildcardMatch( @"?:\", path, false )) // except for drive letters
-				{
-					path = path.Remove( path.Length - 1 );
-				}
-					
-			}
-
-			return path;
-		}
-
-		public string GetProp( string key )
-		{
-			if( this.Properties.ContainsKey( key ) )
-				return this.Properties[key];
-			else
-				return "";
-		}
-	}
+    public string GetProp(string key) =>
+        Properties.TryGetValue(key, out var value) ? value : string.Empty;
 }
