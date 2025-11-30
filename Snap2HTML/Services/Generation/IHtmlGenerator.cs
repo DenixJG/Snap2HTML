@@ -1,4 +1,6 @@
-namespace Snap2HTML.Services;
+using Snap2HTML.Services.Scanning;
+
+namespace Snap2HTML.Services.Generation;
 
 /// <summary>
 /// Options for HTML generation.

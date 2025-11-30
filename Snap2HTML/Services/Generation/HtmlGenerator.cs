@@ -1,8 +1,11 @@
 using System.Diagnostics;
 using System.Text;
-using Snap2HTML.Infrastructure;
+using Snap2HTML.Core.Models;
+using Snap2HTML.Core.Utilities;
+using Snap2HTML.Infrastructure.FileSystem;
+using Snap2HTML.Services.Scanning;
 
-namespace Snap2HTML.Services;
+namespace Snap2HTML.Services.Generation;
 
 /// <summary>
 /// Implementation of IHtmlGenerator that creates HTML output from scanned folder content.
@@ -151,7 +154,7 @@ public class HtmlGenerator : IHtmlGenerator
             var linkRoot = options.LinkRoot.Replace(@"\", "/");
 
             // "file://" is needed in the browser if path begins with drive letter, else it should not be used
-            if (Utils.IsWildcardMatch(@"?:/*", linkRoot, false))
+            if (StringUtils.IsWildcardMatch(@"?:/*", linkRoot, false))
             {
                 sbTemplate.Replace("[LINK PROTOCOL]", @"file://");
             }
@@ -184,7 +187,8 @@ public class HtmlGenerator : IHtmlGenerator
         //    Each index in "dirs" array is an array representing a directory:
         //      First item in array: "directory path*always 0*directory modified date"
         //        Note that forward slashes are used instead of (Windows style) backslashes
-        //      Then, for each each file in the directory: "filename*size of file*file modified date"
+        //      Then, for each each file in the directory: "filename*size of file*file modified date*hash"
+        //        The hash field is always present (empty string if hashing disabled)
         //      Second to last item in array tells the total size of directory content
         //      Last item in array references IDs to all subdirectories of this dir (if any).
         //        ID is the item index in dirs array.
@@ -241,14 +245,16 @@ public class HtmlGenerator : IHtmlGenerator
             result.Append($"D.p([{lineBreakSymbol}");
 
             var sDirWithForwardSlash = currentDir.GetFullPath().Replace(@"\", "/");
-            result.Append($"\"{Utils.MakeCleanJsString(sDirWithForwardSlash)}*0*{currentDir.GetProp("Modified")}\",{lineBreakSymbol}");
+            result.Append($"\"{StringUtils.MakeCleanJsString(sDirWithForwardSlash)}*0*{currentDir.GetProp("Modified")}\",{lineBreakSymbol}");
 
             long dirSize = 0;
 
             foreach (var currentFile in currentDir.Files)
             {
-                result.Append($"\"{Utils.MakeCleanJsString(currentFile.Name)}*{currentFile.GetProp("Size")}*{currentFile.GetProp("Modified")}\",{lineBreakSymbol}");
-                dirSize += Utils.ParseLong(currentFile.GetProp("Size"));
+                // Always include hash field for consistent data format: "filename*size*modified*hash"
+                var hash = currentFile.GetProp("Hash");
+                result.Append($"\"{StringUtils.MakeCleanJsString(currentFile.Name)}*{currentFile.GetProp("Size")}*{currentFile.GetProp("Modified")}*{hash}\",{lineBreakSymbol}");
+                dirSize += StringUtils.ParseLong(currentFile.GetProp("Size"));
             }
 
             result.Append($"{dirSize},{lineBreakSymbol}");

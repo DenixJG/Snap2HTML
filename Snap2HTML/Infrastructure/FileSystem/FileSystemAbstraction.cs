@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Snap2HTML.Infrastructure;
+namespace Snap2HTML.Infrastructure.FileSystem;
 
 /// <summary>
 /// Default implementation of IFileSystemAbstraction that wraps the actual file system.

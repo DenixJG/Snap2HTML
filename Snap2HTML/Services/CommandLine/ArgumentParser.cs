@@ -28,12 +28,12 @@ using System.Collections.ObjectModel;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace CommandLine.Utility;
+namespace Snap2HTML.Services.CommandLine;
 
 /// <summary>
-/// Arguments class
+/// Arguments class for parsing command line arguments.
 /// </summary>
-class Arguments
+public class Arguments
 {
     /// <summary>
     /// Splits the command line. When main(string[] args) is used escaped quotes (ie a path "c:\folder\")

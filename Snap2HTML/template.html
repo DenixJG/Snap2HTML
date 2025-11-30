@@ -296,6 +296,15 @@
 			white-space: nowrap;
 		}
 
+		td.hash {
+			font-family: monospace;
+			font-size: 0.85em;
+			white-space: nowrap;
+			max-width: 150px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
 
 		/* make room for [..] */
 		#files.tablesorter.has-parent-folder th {
@@ -1061,7 +1070,7 @@
 					var table_html = "";
 					table_html += "<table id='files' class='tablesorter'><thead><tr><th>Name</th>" + 
 									locationHtml + 
-									"<th>Size</th><th>Modified</th></tr></thead><tbody>";
+									"<th>Size</th><th>Modified</th><th>Hash</th></tr></thead><tbody>";
 
 					var countFiles = 0;
 					var countDirs = 0;
@@ -1120,7 +1129,7 @@
 									"<td><span class='file_folder'><a href=\"#\" class=\"folder_link\" id=\"" + SearchLocationsID[index] + "\"> " + SearchFilenames[index][3] + "</a></span></td>" + 
 									locationHtml + 
 									"<td class='size' data-sort='" + SearchFilenames[index][1] + "'>" + bytesToSize( SearchFilenames[index][1] ) + "</td>" + 
-									"<td class='date' data-sort='" + SearchFilenames[index][2] + "'>" + timestamp + "</td>" + 
+									"<td class='date' data-sort='" + SearchFilenames[index][2] + "'>" + timestamp + "</td>" + "<td class='hash'>" + (SearchFilenames[index][4] || "") + "</td>" + 
 								"</tr>";
 							currentView.push( { "name": SearchFilenames[index][3], "path": SearchLocationsRaw[index].replace(/\//g,"\\"), "type": "dir", "size": SearchFilenames[index][1], "date": SearchFilenames[index][2] } );
 						}
@@ -1176,10 +1185,10 @@
 									"<td><span class='file'>" + file_tmp + "</span></td>" + 
 									locationHtml + 
 									"<td class='size' data-sort='" + SearchFilenames[index][1] + "'>" + bytesToSize( SearchFilenames[index][1] ) + "</td>" + 
-									"<td class='date' data-sort='" + SearchFilenames[index][2] + "'>" + timestamp + "</td>" + 
+									"<td class='date' data-sort='" + SearchFilenames[index][2] + "'>" + timestamp + "</td>" + "<td class='hash'>" + (SearchFilenames[index][4] || "") + "</td>" + 
 								"</tr>";
 
-							currentView.push( { "name": SearchFilenames[index][3], "path": SearchLocationsRaw[index].replace(/\//g,"\\"), "type": "file", "size": SearchFilenames[index][1], "date": SearchFilenames[index][2] } );
+							currentView.push( { "name": SearchFilenames[index][3], "path": SearchLocationsRaw[index].replace(/\//g,"\\"), "type": "file", "size": SearchFilenames[index][1], "date": SearchFilenames[index][2], "hash": SearchFilenames[index][4] || "" } );
 
 						}
 					}
@@ -1271,7 +1280,7 @@
 					table_html += "<span id='parent_folder' class='file_folder'><a href=\"#\" class=\"folder_link\" id=\"" + parent_folders[FolderID] + "\"> [..]</a></span>\n";
 					table_html += "<div id='parent_folder_border'></div>";
 				}
-				table_html += "<table id='files' class='tablesorter" + showParentFolderClass + "'><thead><th>Name</th><th>Size</th><th>Modified</th></tr></thead><tbody>\n";
+				table_html += "<table id='files' class='tablesorter" + showParentFolderClass + "'><thead><th>Name</th><th>Size</th><th>Modified</th><th>Hash</th></tr></thead><tbody>\n";
 
 				currentView = [];
 				var countFiles = 0;
@@ -1294,7 +1303,7 @@
 							"<tr>" + 
 								"<td><span class='file_folder'><a href=\"#\" class=\"folder_link\" id=\"" + subdirs[c] + "\"> " + name + "</a></span></td>" + 
 								"<td class='size' data-sort='" + dirSize + "'>" + bytesToSize( dirSize ) + "</td>" + 
-								"<td class='date' data-sort='" + sTmp[2] + "'>" + timestamp + "</td>" + 
+								"<td class='date' data-sort='" + sTmp[2] + "'>" + timestamp + "</td>" + "<td class='hash'>" + (sTmp[3] || "") + "</td>" + 
 							"</tr>\n";
 						currentView.push( { "name": name, "path": currentViewPath, "type": "dir", "size": dirSize, "date": sTmp[2] } );
 					}
@@ -1345,9 +1354,9 @@
 						"<tr>" + 
 							"<td><span class='file'>" + file_tmp + "</span></td>" + 
 							"<td class='size' data-sort='" + sTmp[1] + "'>" + bytesToSize( sTmp[1] ) + "</td>" + 
-							"<td class='date' data-sort='" + sTmp[2] + "'>" + timestamp + "</td>" + 
+							"<td class='date' data-sort='" + sTmp[2] + "'>" + timestamp + "</td>" + "<td class='hash'>" + (sTmp[3] || "") + "</td>" + 
 						"</tr>\n";
-					currentView.push( { "name": sTmp[0], "path": currentViewPath, "type": "file", "size": sTmp[1], "date": sTmp[2] } );
+					currentView.push( { "name": sTmp[0], "path": currentViewPath, "type": "file", "size": sTmp[1], "date": sTmp[2], "hash": sTmp[3] || "" } );
 				}
 
 				table_html += "</tbody></table>\n";

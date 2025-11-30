@@ -1,6 +1,6 @@
-using Snap2HTML.Infrastructure;
+using Snap2HTML.Infrastructure.FileSystem;
 
-namespace Snap2HTML.Services;
+namespace Snap2HTML.Services.Generation;
 
 /// <summary>
 /// Default implementation of ITemplateProvider that loads templates from the file system.

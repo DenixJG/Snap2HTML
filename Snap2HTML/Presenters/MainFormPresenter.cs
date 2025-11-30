@@ -1,4 +1,6 @@
-using Snap2HTML.Services;
+using Snap2HTML.Core.Models;
+using Snap2HTML.Services.Generation;
+using Snap2HTML.Services.Scanning;
 
 namespace Snap2HTML.Presenters;
 
@@ -120,7 +122,8 @@ public class MainFormPresenter
             {
                 RootFolder = settings.RootFolder,
                 SkipHiddenItems = settings.SkipHiddenItems,
-                SkipSystemItems = settings.SkipSystemItems
+                SkipSystemItems = settings.SkipSystemItems,
+                EnableHashing = settings.EnableHashing
             };
 
             // Create progress reporter for scanning

@@ -8,6 +8,8 @@ using System.Configuration;
 using System.Windows.Forms;
 using System.Xml;
 
+namespace Snap2HTML.Infrastructure.Settings;
+
 public class PortableSettingsProvider : SettingsProvider
 {
     private const string SettingsRoot = "Settings";

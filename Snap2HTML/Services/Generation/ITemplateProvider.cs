@@ -1,4 +1,4 @@
-namespace Snap2HTML.Services;
+namespace Snap2HTML.Services.Generation;
 
 /// <summary>
 /// Interface for providing HTML templates.

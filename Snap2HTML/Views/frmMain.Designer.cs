@@ -1,4 +1,4 @@
-﻿namespace Snap2HTML
+﻿namespace Snap2HTML.Views
 {
     partial class frmMain
     {
@@ -42,6 +42,7 @@
 			this.chkLinkFiles = new System.Windows.Forms.CheckBox();
 			this.chkHidden = new System.Windows.Forms.CheckBox();
 			this.chkSystem = new System.Windows.Forms.CheckBox();
+			this.chkEnableHash = new System.Windows.Forms.CheckBox();
 			this.cmdCreate = new System.Windows.Forms.Button();
 			this.txtRoot = new System.Windows.Forms.TextBox();
 			this.labelRootFolder = new System.Windows.Forms.Label();
@@ -71,7 +72,6 @@
 			this.labelAboutTitle = new System.Windows.Forms.Label();
 			this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
 			this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
-			this.backgroundWorker = new System.ComponentModel.BackgroundWorker();
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
 			this.statusStrip1.SuspendLayout();
 			this.tabControl1.SuspendLayout();
@@ -124,6 +124,7 @@
 			this.tabPage1.Controls.Add(this.chkLinkFiles);
 			this.tabPage1.Controls.Add(this.chkHidden);
 			this.tabPage1.Controls.Add(this.chkSystem);
+			this.tabPage1.Controls.Add(this.chkEnableHash);
 			this.tabPage1.Controls.Add(this.cmdCreate);
 			this.tabPage1.Controls.Add(this.txtRoot);
 			this.tabPage1.Controls.Add(this.labelRootFolder);
@@ -227,6 +228,19 @@
 			this.chkSystem.Text = "Include system items";
 			this.toolTip1.SetToolTip(this.chkSystem, "This applies to both files and folders");
 			this.chkSystem.UseVisualStyleBackColor = true;
+			// 
+			// chkEnableHash
+			// 
+			this.chkEnableHash.AutoSize = true;
+			this.chkEnableHash.Checked = global::Snap2HTML.Properties.Settings.Default.chkEnableHash;
+			this.chkEnableHash.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::Snap2HTML.Properties.Settings.Default, "chkEnableHash", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+			this.chkEnableHash.Location = new System.Drawing.Point(160, 56);
+			this.chkEnableHash.Name = "chkEnableHash";
+			this.chkEnableHash.Size = new System.Drawing.Size(139, 17);
+			this.chkEnableHash.TabIndex = 19;
+			this.chkEnableHash.Text = "Generate file hashes";
+			this.toolTip1.SetToolTip(this.chkEnableHash, "Compute SHA256 hash for each file (slower scanning)");
+			this.chkEnableHash.UseVisualStyleBackColor = true;
 			// 
 			// cmdCreate
 			// 
@@ -540,14 +554,6 @@
 			this.folderBrowserDialog1.RootFolder = System.Environment.SpecialFolder.MyComputer;
 			this.folderBrowserDialog1.ShowNewFolderButton = false;
 			// 
-			// backgroundWorker
-			// 
-			this.backgroundWorker.WorkerReportsProgress = true;
-			this.backgroundWorker.WorkerSupportsCancellation = true;
-			this.backgroundWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker_DoWork);
-			this.backgroundWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.backgroundWorker_ProgressChanged);
-			this.backgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.backgroundWorker_RunWorkerCompleted);
-			// 
 			// frmMain
 			// 
 			this.AcceptButton = this.cmdCreate;
@@ -608,13 +614,13 @@
 		private System.Windows.Forms.Label labelAboutSoftware;
 		private System.Windows.Forms.Label labelAboutVersion;
 		private System.Windows.Forms.Label labelAboutTitle;
-        private System.ComponentModel.BackgroundWorker backgroundWorker;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.CheckBox chkOpenOutput;
         private System.Windows.Forms.TextBox txtLinkRoot;
         private System.Windows.Forms.CheckBox chkLinkFiles;
         private System.Windows.Forms.CheckBox chkHidden;
         private System.Windows.Forms.CheckBox chkSystem;
+        private System.Windows.Forms.CheckBox chkEnableHash;
 		private System.Windows.Forms.Label label2;
 		private System.Windows.Forms.TextBox txtTitle;
 		private System.Windows.Forms.ToolTip toolTip1;
