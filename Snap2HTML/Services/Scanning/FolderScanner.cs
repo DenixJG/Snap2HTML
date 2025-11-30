@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Security.Cryptography;
 using System.Threading.Channels;
 using Snap2HTML.Core.Models;
 using Snap2HTML.Core.Utilities;
@@ -339,16 +340,39 @@ public class FolderScanner : IFolderScanner
             var modifiedTimestamp = StringUtils.ToUnixTimestamp(fi.LastWriteTime.ToLocalTime());
             var createdTimestamp = StringUtils.ToUnixTimestamp(fi.CreationTime.ToLocalTime());
 
+            // Compute hash if enabled
+            var hash = string.Empty;
+            if (options.EnableHashing)
+            {
+                hash = ComputeFileHash(filePath);
+            }
+
             return new SnappedFile(
                 Path.GetFileName(filePath),
                 fi.Length,
                 modifiedTimestamp,
-                createdTimestamp);
+                createdTimestamp,
+                hash);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"{ex} Exception caught.");
             return null;
+        }
+    }
+
+    private static string ComputeFileHash(string filePath)
+    {
+        try
+        {
+            using var stream = File.OpenRead(filePath);
+            var hashBytes = SHA256.HashData(stream);
+            return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error computing hash for {filePath}: {ex.Message}");
+            return string.Empty;
         }
     }
 
