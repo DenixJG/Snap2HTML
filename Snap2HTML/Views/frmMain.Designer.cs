@@ -43,6 +43,8 @@
 			this.chkHidden = new System.Windows.Forms.CheckBox();
 			this.chkSystem = new System.Windows.Forms.CheckBox();
 			this.chkEnableHash = new System.Windows.Forms.CheckBox();
+			this.lblIntegrityLevel = new System.Windows.Forms.Label();
+			this.cmbIntegrityLevel = new System.Windows.Forms.ComboBox();
 			this.cmdCreate = new System.Windows.Forms.Button();
 			this.txtRoot = new System.Windows.Forms.TextBox();
 			this.labelRootFolder = new System.Windows.Forms.Label();
@@ -125,6 +127,8 @@
 			this.tabPage1.Controls.Add(this.chkHidden);
 			this.tabPage1.Controls.Add(this.chkSystem);
 			this.tabPage1.Controls.Add(this.chkEnableHash);
+			this.tabPage1.Controls.Add(this.lblIntegrityLevel);
+			this.tabPage1.Controls.Add(this.cmbIntegrityLevel);
 			this.tabPage1.Controls.Add(this.cmdCreate);
 			this.tabPage1.Controls.Add(this.txtRoot);
 			this.tabPage1.Controls.Add(this.labelRootFolder);
@@ -241,6 +245,29 @@
 			this.chkEnableHash.Text = "Generate file hashes";
 			this.toolTip1.SetToolTip(this.chkEnableHash, "Compute SHA256 hash for each file (slower scanning)");
 			this.chkEnableHash.UseVisualStyleBackColor = true;
+			// 
+			// lblIntegrityLevel
+			// 
+			this.lblIntegrityLevel.AutoSize = true;
+			this.lblIntegrityLevel.Location = new System.Drawing.Point(160, 79);
+			this.lblIntegrityLevel.Name = "lblIntegrityLevel";
+			this.lblIntegrityLevel.Size = new System.Drawing.Size(83, 13);
+			this.lblIntegrityLevel.TabIndex = 20;
+			this.lblIntegrityLevel.Text = "Image integrity:";
+			// 
+			// cmbIntegrityLevel
+			// 
+			this.cmbIntegrityLevel.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+			this.cmbIntegrityLevel.FormattingEnabled = true;
+			this.cmbIntegrityLevel.Items.AddRange(new object[] {
+            "None",
+            "Magic Bytes Only",
+            "Full Decode"});
+			this.cmbIntegrityLevel.Location = new System.Drawing.Point(248, 76);
+			this.cmbIntegrityLevel.Name = "cmbIntegrityLevel";
+			this.cmbIntegrityLevel.Size = new System.Drawing.Size(72, 21);
+			this.cmbIntegrityLevel.TabIndex = 21;
+			this.toolTip1.SetToolTip(this.cmbIntegrityLevel, "Validate image file integrity (None=disabled, Magic Bytes=fast header check, Full Decode=thorough validation)");
 			// 
 			// cmdCreate
 			// 
@@ -621,6 +648,8 @@
         private System.Windows.Forms.CheckBox chkHidden;
         private System.Windows.Forms.CheckBox chkSystem;
         private System.Windows.Forms.CheckBox chkEnableHash;
+        private System.Windows.Forms.Label lblIntegrityLevel;
+        private System.Windows.Forms.ComboBox cmbIntegrityLevel;
 		private System.Windows.Forms.Label label2;
 		private System.Windows.Forms.TextBox txtTitle;
 		private System.Windows.Forms.ToolTip toolTip1;

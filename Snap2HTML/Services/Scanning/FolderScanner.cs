@@ -4,6 +4,7 @@ using System.Threading.Channels;
 using Snap2HTML.Core.Models;
 using Snap2HTML.Core.Utilities;
 using Snap2HTML.Infrastructure.FileSystem;
+using Snap2HTML.Services.Validation;
 
 namespace Snap2HTML.Services.Scanning;
 
@@ -14,10 +15,17 @@ namespace Snap2HTML.Services.Scanning;
 public class FolderScanner : IFolderScanner
 {
     private readonly IFileSystemAbstraction _fileSystem;
+    private readonly IImageIntegrityValidator _integrityValidator;
 
     public FolderScanner(IFileSystemAbstraction fileSystem)
+        : this(fileSystem, new ImageIntegrityValidator())
+    {
+    }
+
+    public FolderScanner(IFileSystemAbstraction fileSystem, IImageIntegrityValidator integrityValidator)
     {
         _fileSystem = fileSystem;
+        _integrityValidator = integrityValidator;
     }
 
     public async Task<ScanResult> ScanAsync(
@@ -347,17 +355,39 @@ public class FolderScanner : IFolderScanner
                 hash = ComputeFileHash(filePath);
             }
 
+            // Validate image integrity if enabled
+            var integrityStatus = IntegrityStatus.Unknown;
+            if (options.ImageIntegrityLevel != IntegrityValidationLevel.None)
+            {
+                integrityStatus = ValidateImageIntegrity(filePath, options.ImageIntegrityLevel);
+            }
+
             return new SnappedFile(
                 Path.GetFileName(filePath),
                 fi.Length,
                 modifiedTimestamp,
                 createdTimestamp,
-                hash);
+                hash,
+                integrityStatus);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"{ex} Exception caught.");
             return null;
+        }
+    }
+
+    private IntegrityStatus ValidateImageIntegrity(string filePath, IntegrityValidationLevel level)
+    {
+        try
+        {
+            return _integrityValidator.ValidateAsync(filePath, level, CancellationToken.None)
+                .AsTask().GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error validating integrity for {filePath}: {ex.Message}");
+            return IntegrityStatus.Unknown;
         }
     }
 

@@ -14,13 +14,15 @@ public readonly struct SnappedFile
     /// <param name="modifiedTimestamp">The modified date as Unix timestamp.</param>
     /// <param name="createdTimestamp">The created date as Unix timestamp.</param>
     /// <param name="hash">The file hash (SHA256), or empty string if not computed.</param>
-    public SnappedFile(string name, long size, long modifiedTimestamp, long createdTimestamp, string hash = "")
+    /// <param name="integrityStatus">The integrity status of the file.</param>
+    public SnappedFile(string name, long size, long modifiedTimestamp, long createdTimestamp, string hash = "", IntegrityStatus integrityStatus = IntegrityStatus.Unknown)
     {
         Name = name;
         Size = size;
         ModifiedTimestamp = modifiedTimestamp;
         CreatedTimestamp = createdTimestamp;
         Hash = hash;
+        IntegrityStatus = integrityStatus;
     }
 
     /// <summary>
@@ -49,6 +51,11 @@ public readonly struct SnappedFile
     public string Hash { get; }
 
     /// <summary>
+    /// The integrity status of the file.
+    /// </summary>
+    public IntegrityStatus IntegrityStatus { get; }
+
+    /// <summary>
     /// Gets a property value by key for backward compatibility.
     /// </summary>
     public string GetProp(string key) => key switch
@@ -57,6 +64,7 @@ public readonly struct SnappedFile
         "Modified" => ModifiedTimestamp.ToString(),
         "Created" => CreatedTimestamp.ToString(),
         "Hash" => Hash,
+        "IntegrityStatus" => ((int)IntegrityStatus).ToString(),
         _ => string.Empty
     };
 }
