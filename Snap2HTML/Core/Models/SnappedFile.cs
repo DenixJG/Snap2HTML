@@ -2,32 +2,53 @@ namespace Snap2HTML.Core.Models;
 
 /// <summary>
 /// Represents a file captured during directory scanning.
+/// Uses typed properties instead of Dictionary for better performance and memory efficiency.
 /// </summary>
-public class SnappedFile
+public readonly struct SnappedFile
 {
     /// <summary>
     /// Creates a new instance of SnappedFile.
     /// </summary>
     /// <param name="name">The file name.</param>
-    public SnappedFile(string name)
+    /// <param name="size">The file size in bytes.</param>
+    /// <param name="modifiedTimestamp">The modified date as Unix timestamp.</param>
+    /// <param name="createdTimestamp">The created date as Unix timestamp.</param>
+    public SnappedFile(string name, long size, long modifiedTimestamp, long createdTimestamp)
     {
         Name = name;
-        Properties = [];
+        Size = size;
+        ModifiedTimestamp = modifiedTimestamp;
+        CreatedTimestamp = createdTimestamp;
     }
 
     /// <summary>
     /// The file name.
     /// </summary>
-    public string Name { get; set; }
+    public string Name { get; }
 
     /// <summary>
-    /// Additional properties for the file (Size, Modified, Created, etc.).
+    /// The file size in bytes.
     /// </summary>
-    public Dictionary<string, string> Properties { get; set; }
+    public long Size { get; }
 
     /// <summary>
-    /// Gets a property value by key, or empty string if not found.
+    /// The modified date as Unix timestamp.
     /// </summary>
-    public string GetProp(string key) =>
-        Properties.TryGetValue(key, out var value) ? value : string.Empty;
+    public long ModifiedTimestamp { get; }
+
+    /// <summary>
+    /// The created date as Unix timestamp.
+    /// </summary>
+    public long CreatedTimestamp { get; }
+
+    /// <summary>
+    /// Gets a property value by key for backward compatibility.
+    /// </summary>
+    public string GetProp(string key) => key switch
+    {
+        "Size" => Size.ToString(),
+        "Modified" => ModifiedTimestamp.ToString(),
+        "Created" => CreatedTimestamp.ToString(),
+        _ => string.Empty
+    };
 }

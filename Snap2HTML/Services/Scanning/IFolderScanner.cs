@@ -31,6 +31,12 @@ public class ScanOptions
     /// Whether to validate file integrity during scanning.
     /// </summary>
     public bool EnableIntegrityValidation { get; set; }
+
+    /// <summary>
+    /// Maximum degree of parallelism for scanning operations.
+    /// Default is the minimum of processor count and 4.
+    /// </summary>
+    public int MaxDegreeOfParallelism { get; set; } = Math.Min(Environment.ProcessorCount, 4);
 }
 
 /// <summary>

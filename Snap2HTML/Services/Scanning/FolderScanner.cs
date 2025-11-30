@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Threading.Channels;
 using Snap2HTML.Core.Models;
 using Snap2HTML.Core.Utilities;
 using Snap2HTML.Infrastructure.FileSystem;
@@ -7,6 +8,7 @@ namespace Snap2HTML.Services.Scanning;
 
 /// <summary>
 /// Implementation of IFolderScanner that scans folders for files and metadata.
+/// Uses single-pass enumeration with parallel processing via Channels for improved performance.
 /// </summary>
 public class FolderScanner : IFolderScanner
 {
@@ -27,17 +29,15 @@ public class FolderScanner : IFolderScanner
         try
         {
             var stopwatch = Stopwatch.StartNew();
+            var folders = new Dictionary<string, SnappedFolder>();
 
-            // Get all folders
-            var dirs = new List<string> { options.RootFolder };
-            await Task.Run(() => DirSearch(
+            // Collect all directories first (single pass with enumeration)
+            var dirs = await CollectDirectoriesAsync(
                 options.RootFolder,
-                dirs,
-                options.SkipHiddenItems,
-                options.SkipSystemItems,
+                options,
                 stopwatch,
                 progress,
-                cancellationToken), cancellationToken);
+                cancellationToken);
 
             if (cancellationToken.IsCancellationRequested)
             {
@@ -47,36 +47,34 @@ public class FolderScanner : IFolderScanner
 
             dirs = StringUtils.SortDirList(dirs);
 
-            // Parse each folder
-            var totFiles = 0;
+            // Process directories
             stopwatch.Restart();
 
-            for (var d = 0; d < dirs.Count; d++)
+            // Use parallel processing for large directory sets
+            int totFiles;
+            if (dirs.Count > 10)
             {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    result.WasCancelled = true;
-                    return result;
-                }
-
-                var dirName = dirs[d];
-                var currentDir = CreateSnappedFolder(dirName);
-
-                // Get folder metadata
-                SetFolderMetadata(currentDir, dirName);
-
-                // Get files in folder
-                var files = GetFilesInFolder(dirName, options, stopwatch, progress, ref totFiles, cancellationToken);
-
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    result.WasCancelled = true;
-                    return result;
-                }
-
-                currentDir.Files.AddRange(files);
-                result.Folders.Add(currentDir);
+                totFiles = await ProcessDirectoriesParallelAsync(
+                    dirs, folders, options, stopwatch, progress, cancellationToken);
             }
+            else
+            {
+                // Sequential processing for small sets
+                totFiles = ProcessDirectoriesSequential(
+                    dirs, folders, options, stopwatch, progress, cancellationToken);
+            }
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                result.WasCancelled = true;
+                return result;
+            }
+
+            // Convert to sorted list maintaining order
+            result.Folders = dirs
+                .Where(d => folders.ContainsKey(d))
+                .Select(d => folders[d])
+                .ToList();
 
             // Calculate stats
             CalculateStats(result);
@@ -93,6 +91,183 @@ public class FolderScanner : IFolderScanner
         return result;
     }
 
+    private async Task<List<string>> CollectDirectoriesAsync(
+        string rootFolder,
+        ScanOptions options,
+        Stopwatch stopwatch,
+        IProgress<ScanProgress>? progress,
+        CancellationToken cancellationToken)
+    {
+        var dirs = new List<string> { rootFolder };
+        var queue = new Queue<string>();
+        queue.Enqueue(rootFolder);
+
+        await Task.Run(() =>
+        {
+            while (queue.Count > 0 && !cancellationToken.IsCancellationRequested)
+            {
+                var currentDir = queue.Dequeue();
+
+                try
+                {
+                    // Use EnumerateDirectories for lazy enumeration (memory efficient)
+                    foreach (var d in Directory.EnumerateDirectories(currentDir))
+                    {
+                        if (cancellationToken.IsCancellationRequested) return;
+
+                        var includeThisFolder = ShouldIncludeDirectory(d, options);
+
+                        if (includeThisFolder)
+                        {
+                            dirs.Add(d);
+                            queue.Enqueue(d);
+
+                            if (stopwatch.ElapsedMilliseconds >= 50)
+                            {
+                                progress?.Report(new ScanProgress
+                                {
+                                    StatusMessage = $"Getting folders... {dirs.Count}",
+                                    FoldersProcessed = dirs.Count,
+                                    CurrentItem = d
+                                });
+                                stopwatch.Restart();
+                            }
+                        }
+                    }
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    // Skip directories we can't access
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"ERROR in CollectDirectoriesAsync(): {ex.Message}");
+                }
+            }
+        }, cancellationToken);
+
+        return dirs;
+    }
+
+    private bool ShouldIncludeDirectory(string path, ScanOptions options)
+    {
+        if (!options.SkipHiddenItems && !options.SkipSystemItems)
+            return true;
+
+        try
+        {
+            var attr = File.GetAttributes(path);
+
+            if (options.SkipHiddenItems && (attr & FileAttributes.Hidden) == FileAttributes.Hidden)
+                return false;
+
+            if (options.SkipSystemItems && (attr & FileAttributes.System) == FileAttributes.System)
+                return false;
+        }
+        catch
+        {
+            // If we can't get attributes, include the directory
+        }
+
+        return true;
+    }
+
+    private async Task<int> ProcessDirectoriesParallelAsync(
+        List<string> dirs,
+        Dictionary<string, SnappedFolder> folders,
+        ScanOptions options,
+        Stopwatch stopwatch,
+        IProgress<ScanProgress>? progress,
+        CancellationToken cancellationToken)
+    {
+        var lockObj = new object();
+        var localTotFiles = 0;
+
+        var parallelOptions = new ParallelOptions
+        {
+            MaxDegreeOfParallelism = options.MaxDegreeOfParallelism,
+            CancellationToken = cancellationToken
+        };
+
+        await Parallel.ForEachAsync(dirs, parallelOptions, async (dirName, ct) =>
+        {
+            var folder = await ProcessDirectoryAsync(dirName, options, ct);
+            
+            lock (lockObj)
+            {
+                folders[dirName] = folder;
+                localTotFiles += folder.Files.Count;
+
+                if (stopwatch.ElapsedMilliseconds >= 50)
+                {
+                    progress?.Report(new ScanProgress
+                    {
+                        StatusMessage = $"Reading files... {localTotFiles}",
+                        FilesProcessed = localTotFiles,
+                        FoldersProcessed = folders.Count,
+                        CurrentItem = dirName
+                    });
+                    stopwatch.Restart();
+                }
+            }
+        });
+
+        return localTotFiles;
+    }
+
+    private int ProcessDirectoriesSequential(
+        List<string> dirs,
+        Dictionary<string, SnappedFolder> folders,
+        ScanOptions options,
+        Stopwatch stopwatch,
+        IProgress<ScanProgress>? progress,
+        CancellationToken cancellationToken)
+    {
+        var totFiles = 0;
+
+        foreach (var dirName in dirs)
+        {
+            if (cancellationToken.IsCancellationRequested) break;
+
+            var folder = ProcessDirectorySync(dirName, options);
+            folders[dirName] = folder;
+            totFiles += folder.Files.Count;
+
+            if (stopwatch.ElapsedMilliseconds >= 50)
+            {
+                progress?.Report(new ScanProgress
+                {
+                    StatusMessage = $"Reading files... {totFiles}",
+                    FilesProcessed = totFiles,
+                    FoldersProcessed = folders.Count,
+                    CurrentItem = dirName
+                });
+                stopwatch.Restart();
+            }
+        }
+
+        return totFiles;
+    }
+
+    private async Task<SnappedFolder> ProcessDirectoryAsync(string dirName, ScanOptions options, CancellationToken ct)
+    {
+        return await Task.Run(() => ProcessDirectorySync(dirName, options), ct);
+    }
+
+    private SnappedFolder ProcessDirectorySync(string dirName, ScanOptions options)
+    {
+        var folder = CreateSnappedFolder(dirName);
+        SetFolderMetadata(folder, dirName);
+        
+        var files = GetFilesInFolder(dirName, options);
+        foreach (var file in files)
+        {
+            folder.Files.Add(file);
+        }
+
+        return folder;
+    }
+
     private SnappedFolder CreateSnappedFolder(string dirName)
     {
         if (dirName == Path.GetPathRoot(dirName))
@@ -107,80 +282,49 @@ public class FolderScanner : IFolderScanner
 
     private void SetFolderMetadata(SnappedFolder folder, string dirName)
     {
-        var modifiedDate = "";
-        var createdDate = "";
-
         try
         {
-            modifiedDate = StringUtils.ToUnixTimestamp(_fileSystem.GetLastWriteTime(dirName).ToLocalTime()).ToString();
-            createdDate = StringUtils.ToUnixTimestamp(_fileSystem.GetCreationTime(dirName).ToLocalTime()).ToString();
+            folder.ModifiedTimestamp = StringUtils.ToUnixTimestamp(_fileSystem.GetLastWriteTime(dirName).ToLocalTime());
+            folder.CreatedTimestamp = StringUtils.ToUnixTimestamp(_fileSystem.GetCreationTime(dirName).ToLocalTime());
         }
         catch (Exception ex)
         {
             Console.WriteLine($"{ex} Exception caught.");
         }
-
-        folder.Properties.Add("Modified", modifiedDate);
-        folder.Properties.Add("Created", createdDate);
     }
 
-    private List<SnappedFile> GetFilesInFolder(
-        string dirName,
-        ScanOptions options,
-        Stopwatch stopwatch,
-        IProgress<ScanProgress>? progress,
-        ref int totFiles,
-        CancellationToken cancellationToken)
+    private List<SnappedFile> GetFilesInFolder(string dirName, ScanOptions options)
     {
         var result = new List<SnappedFile>();
 
-        List<string> files;
         try
         {
-            files = _fileSystem.GetFiles(dirName).ToList();
+            // Use EnumerateFiles for lazy enumeration (memory efficient)
+            foreach (var filePath in Directory.EnumerateFiles(dirName))
+            {
+                var snappedFile = CreateSnappedFile(filePath, options);
+                if (snappedFile.HasValue)
+                {
+                    result.Add(snappedFile.Value);
+                }
+            }
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Skip directories we can't access
         }
         catch (Exception ex)
         {
             Console.WriteLine($"{ex} Exception caught.");
-            return result;
         }
 
-        files.Sort();
-
-        foreach (var sFile in files)
-        {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                return result;
-            }
-
-            totFiles++;
-
-            if (stopwatch.ElapsedMilliseconds >= 50)
-            {
-                progress?.Report(new ScanProgress
-                {
-                    StatusMessage = $"Reading files... {totFiles}",
-                    FilesProcessed = totFiles,
-                    CurrentItem = sFile
-                });
-                stopwatch.Restart();
-            }
-
-            var snappedFile = CreateSnappedFile(sFile, options);
-            if (snappedFile != null)
-            {
-                result.Add(snappedFile);
-            }
-        }
-
+        // Sort files by name
+        result.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.Ordinal));
         return result;
     }
 
     private SnappedFile? CreateSnappedFile(string filePath, ScanOptions options)
     {
-        var currentFile = new SnappedFile(Path.GetFileName(filePath));
-
         try
         {
             var fi = _fileSystem.GetFileInfo(filePath);
@@ -192,89 +336,19 @@ public class FolderScanner : IFolderScanner
                 return null;
             }
 
-            currentFile.Properties.Add("Size", fi.Length.ToString());
+            var modifiedTimestamp = StringUtils.ToUnixTimestamp(fi.LastWriteTime.ToLocalTime());
+            var createdTimestamp = StringUtils.ToUnixTimestamp(fi.CreationTime.ToLocalTime());
 
-            var modifiedDate = "-";
-            var createdDate = "-";
-
-            try
-            {
-                modifiedDate = StringUtils.ToUnixTimestamp(fi.LastWriteTime.ToLocalTime()).ToString();
-                createdDate = StringUtils.ToUnixTimestamp(fi.CreationTime.ToLocalTime()).ToString();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"{ex} Exception caught.");
-            }
-
-            currentFile.Properties.Add("Modified", modifiedDate);
-            currentFile.Properties.Add("Created", createdDate);
+            return new SnappedFile(
+                Path.GetFileName(filePath),
+                fi.Length,
+                modifiedTimestamp,
+                createdTimestamp);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"{ex} Exception caught.");
-        }
-
-        return currentFile;
-    }
-
-    private void DirSearch(
-        string sDir,
-        List<string> lstDirs,
-        bool skipHidden,
-        bool skipSystem,
-        Stopwatch stopwatch,
-        IProgress<ScanProgress>? progress,
-        CancellationToken cancellationToken)
-    {
-        if (cancellationToken.IsCancellationRequested) return;
-
-        try
-        {
-            foreach (var d in _fileSystem.GetDirectories(sDir))
-            {
-                if (cancellationToken.IsCancellationRequested) return;
-
-                var includeThisFolder = true;
-
-                if (skipHidden || skipSystem)
-                {
-                    var di = _fileSystem.GetDirectoryInfo(d);
-                    var attr = di.Attributes;
-
-                    if (skipHidden && (attr & FileAttributes.Hidden) == FileAttributes.Hidden)
-                    {
-                        includeThisFolder = false;
-                    }
-
-                    if (skipSystem && (attr & FileAttributes.System) == FileAttributes.System)
-                    {
-                        includeThisFolder = false;
-                    }
-                }
-
-                if (includeThisFolder)
-                {
-                    lstDirs.Add(d);
-
-                    if (stopwatch.ElapsedMilliseconds >= 50)
-                    {
-                        progress?.Report(new ScanProgress
-                        {
-                            StatusMessage = $"Getting folders... {lstDirs.Count}",
-                            FoldersProcessed = lstDirs.Count,
-                            CurrentItem = d
-                        });
-                        stopwatch.Restart();
-                    }
-
-                    DirSearch(d, lstDirs, skipHidden, skipSystem, stopwatch, progress, cancellationToken);
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"ERROR in DirSearch(): {ex.Message}");
+            return null;
         }
     }
 
@@ -289,7 +363,7 @@ public class FolderScanner : IFolderScanner
             foreach (var file in folder.Files)
             {
                 result.TotalFiles++;
-                result.TotalSize += StringUtils.ParseLong(file.GetProp("Size"));
+                result.TotalSize += file.Size;
             }
         }
     }

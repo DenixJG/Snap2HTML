@@ -4,41 +4,50 @@ namespace Snap2HTML.Core.Models;
 
 /// <summary>
 /// Represents a folder captured during directory scanning.
+/// Uses typed properties instead of Dictionary for better performance and memory efficiency.
 /// </summary>
-public class SnappedFolder
+public sealed class SnappedFolder
 {
     /// <summary>
     /// Creates a new instance of SnappedFolder.
     /// </summary>
     /// <param name="name">The folder name.</param>
     /// <param name="path">The parent path of this folder.</param>
-    public SnappedFolder(string name, string path)
+    /// <param name="modifiedTimestamp">The modified date as Unix timestamp.</param>
+    /// <param name="createdTimestamp">The created date as Unix timestamp.</param>
+    public SnappedFolder(string name, string path, long modifiedTimestamp = 0, long createdTimestamp = 0)
     {
         Name = name;
         Path = path;
-        Properties = [];
+        ModifiedTimestamp = modifiedTimestamp;
+        CreatedTimestamp = createdTimestamp;
         Files = [];
     }
 
     /// <summary>
     /// The folder name.
     /// </summary>
-    public string Name { get; set; }
+    public string Name { get; }
 
     /// <summary>
     /// The parent path of this folder.
     /// </summary>
-    public string Path { get; set; }
+    public string Path { get; }
 
     /// <summary>
-    /// Additional properties for the folder (Modified, Created, etc.).
+    /// The modified date as Unix timestamp.
     /// </summary>
-    public Dictionary<string, string> Properties { get; set; }
+    public long ModifiedTimestamp { get; set; }
+
+    /// <summary>
+    /// The created date as Unix timestamp.
+    /// </summary>
+    public long CreatedTimestamp { get; set; }
 
     /// <summary>
     /// The list of files in this folder.
     /// </summary>
-    public List<SnappedFile> Files { get; set; }
+    public List<SnappedFile> Files { get; }
 
     /// <summary>
     /// Gets the full path of this folder.
@@ -59,8 +68,12 @@ public class SnappedFolder
     }
 
     /// <summary>
-    /// Gets a property value by key, or empty string if not found.
+    /// Gets a property value by key for backward compatibility.
     /// </summary>
-    public string GetProp(string key) =>
-        Properties.TryGetValue(key, out var value) ? value : string.Empty;
+    public string GetProp(string key) => key switch
+    {
+        "Modified" => ModifiedTimestamp.ToString(),
+        "Created" => CreatedTimestamp.ToString(),
+        _ => string.Empty
+    };
 }
