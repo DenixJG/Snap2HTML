@@ -377,6 +377,13 @@ public class FolderScanner : IFolderScanner
         }
     }
 
+    /// <summary>
+    /// Validates image integrity synchronously.
+    /// Note: This uses blocking wait on an async operation because the validation is fast (mostly I/O)
+    /// and making the entire CreateSnappedFile/ProcessDirectory chain async would require significant
+    /// architectural changes. For large directory scans, the parallel processing approach already
+    /// provides good throughput.
+    /// </summary>
     private IntegrityStatus ValidateImageIntegrity(string filePath, IntegrityValidationLevel level)
     {
         try

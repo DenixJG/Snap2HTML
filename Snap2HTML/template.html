@@ -1695,15 +1695,20 @@
 			}
 
 			// Convert integrity status code to display HTML
-			// 0=Unknown, 1=Valid, 2=InvalidMagicBytes, 3=DecodingFailed, 4=NotAnImage
+			// Status codes: 0=Unknown, 1=Valid, 2=InvalidMagicBytes, 3=DecodingFailed, 4=NotAnImage
+			// These values correspond to the IntegrityStatus enum in the C# code
 			function integrityStatusToHtml(status) {
-				switch(parseInt(status)) {
-					case 1: return "<span class='integrity-valid' title='Valid'>✓</span>";
-					case 2: return "<span class='integrity-invalid-magic' title='Invalid magic bytes'>⚠</span>";
-					case 3: return "<span class='integrity-failed' title='Decoding failed'>✗</span>";
-					case 4: return "<span class='integrity-unknown' title='Not an image'>—</span>";
-					default: return "";
-				}
+				var statusCode = parseInt(status);
+				// Status 1 = Valid (green checkmark)
+				if (statusCode === 1) return "<span class='integrity-valid' title='Valid'>✓</span>";
+				// Status 2 = InvalidMagicBytes (yellow warning - file header doesn't match expected format)
+				if (statusCode === 2) return "<span class='integrity-invalid-magic' title='Invalid magic bytes'>⚠</span>";
+				// Status 3 = DecodingFailed (red X - corrupt or invalid image data)
+				if (statusCode === 3) return "<span class='integrity-failed' title='Decoding failed'>✗</span>";
+				// Status 4 = NotAnImage (dash - file is not an image type)
+				if (statusCode === 4) return "<span class='integrity-unknown' title='Not an image'>—</span>";
+				// Status 0 or unknown = Unknown (no indicator)
+				return "";
 			}
 			
 			

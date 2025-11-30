@@ -101,12 +101,17 @@ public class ImageIntegrityValidator : IImageIntegrityValidator
         }
 
         // Create a bounded channel for the producer/consumer pattern
-        var channel = Channel.CreateBounded<string>(new BoundedChannelOptions(2000)
+        // Capacity of 2000 provides a good balance between memory usage and throughput
+        // for typical directory scanning scenarios with 100K+ files
+        const int channelCapacity = 2000;
+        var channel = Channel.CreateBounded<string>(new BoundedChannelOptions(channelCapacity)
         {
             SingleWriter = true,
             FullMode = BoundedChannelFullMode.Wait
         });
 
+        // Use 2x processor count as I/O-bound operations benefit from more parallelism
+        // than CPU-bound tasks, since threads spend most time waiting for disk I/O
         var workerCount = Environment.ProcessorCount * 2;
         var results = Channel.CreateUnbounded<(string Path, IntegrityStatus Status)>();
 
