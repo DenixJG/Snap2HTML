@@ -123,7 +123,8 @@ public class MainFormPresenter
                 RootFolder = settings.RootFolder,
                 SkipHiddenItems = settings.SkipHiddenItems,
                 SkipSystemItems = settings.SkipSystemItems,
-                EnableHashing = settings.EnableHashing
+                EnableHashing = settings.EnableHashing,
+                ImageIntegrityLevel = settings.ImageIntegrityLevel
             };
 
             // Create progress reporter for scanning

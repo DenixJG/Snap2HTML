@@ -49,4 +49,9 @@ public class SnapSettings
     /// Whether to compute file hashes during scanning.
     /// </summary>
     public bool EnableHashing { get; set; }
+
+    /// <summary>
+    /// The level of image integrity validation to perform during scanning.
+    /// </summary>
+    public IntegrityValidationLevel ImageIntegrityLevel { get; set; } = IntegrityValidationLevel.None;
 }

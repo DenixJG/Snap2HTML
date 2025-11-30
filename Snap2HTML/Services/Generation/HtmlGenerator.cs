@@ -187,8 +187,9 @@ public class HtmlGenerator : IHtmlGenerator
         //    Each index in "dirs" array is an array representing a directory:
         //      First item in array: "directory path*always 0*directory modified date"
         //        Note that forward slashes are used instead of (Windows style) backslashes
-        //      Then, for each each file in the directory: "filename*size of file*file modified date*hash"
+        //      Then, for each each file in the directory: "filename*size of file*file modified date*hash*integrityStatus"
         //        The hash field is always present (empty string if hashing disabled)
+        //        The integrityStatus field is always present (0=Unknown, 1=Valid, 2=InvalidMagicBytes, 3=DecodingFailed, 4=NotAnImage)
         //      Second to last item in array tells the total size of directory content
         //      Last item in array references IDs to all subdirectories of this dir (if any).
         //        ID is the item index in dirs array.
@@ -251,9 +252,10 @@ public class HtmlGenerator : IHtmlGenerator
 
             foreach (var currentFile in currentDir.Files)
             {
-                // Always include hash field for consistent data format: "filename*size*modified*hash"
+                // Include hash and integrityStatus fields: "filename*size*modified*hash*integrityStatus"
                 var hash = currentFile.GetProp("Hash");
-                result.Append($"\"{StringUtils.MakeCleanJsString(currentFile.Name)}*{currentFile.GetProp("Size")}*{currentFile.GetProp("Modified")}*{hash}\",{lineBreakSymbol}");
+                var integrityStatus = currentFile.GetProp("IntegrityStatus");
+                result.Append($"\"{StringUtils.MakeCleanJsString(currentFile.Name)}*{currentFile.GetProp("Size")}*{currentFile.GetProp("Modified")}*{hash}*{integrityStatus}\",{lineBreakSymbol}");
                 dirSize += StringUtils.ParseLong(currentFile.GetProp("Size"));
             }
 

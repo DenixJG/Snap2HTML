@@ -18,7 +18,14 @@ public partial class frmMain : Form, IMainFormView
     public frmMain()
     {
         InitializeComponent();
+        InitializeIntegrityLevelComboBox();
         InitializePresenter();
+    }
+
+    private void InitializeIntegrityLevelComboBox()
+    {
+        // Set default selection to "None"
+        cmbIntegrityLevel.SelectedIndex = 0;
     }
 
     private void InitializePresenter()
@@ -260,6 +267,14 @@ public partial class frmMain : Form, IMainFormView
         if (!saveFileDialog1.FileName.EndsWith(".html", StringComparison.OrdinalIgnoreCase))
             saveFileDialog1.FileName += ".html";
 
+        // Map combo index to IntegrityValidationLevel
+        var integrityLevel = cmbIntegrityLevel.SelectedIndex switch
+        {
+            1 => IntegrityValidationLevel.MagicBytesOnly,
+            2 => IntegrityValidationLevel.FullDecode,
+            _ => IntegrityValidationLevel.None
+        };
+
         // Begin generating html
         var settings = new SnapSettings
         {
@@ -272,6 +287,7 @@ public partial class frmMain : Form, IMainFormView
             LinkFiles = chkLinkFiles.Checked,
             LinkRoot = txtLinkRoot.Text,
             EnableHashing = chkEnableHash.Checked,
+            ImageIntegrityLevel = integrityLevel,
         };
 
         StartProcessing(settings);

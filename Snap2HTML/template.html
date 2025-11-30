@@ -305,6 +305,27 @@
 			text-overflow: ellipsis;
 		}
 
+		td.integrity {
+			text-align: center;
+			white-space: nowrap;
+		}
+
+		.integrity-valid {
+			color: #28a745;
+		}
+
+		.integrity-invalid-magic {
+			color: #ffc107;
+		}
+
+		.integrity-failed {
+			color: #dc3545;
+		}
+
+		.integrity-unknown {
+			color: #6c757d;
+		}
+
 
 		/* make room for [..] */
 		#files.tablesorter.has-parent-folder th {
@@ -1070,7 +1091,7 @@
 					var table_html = "";
 					table_html += "<table id='files' class='tablesorter'><thead><tr><th>Name</th>" + 
 									locationHtml + 
-									"<th>Size</th><th>Modified</th><th>Hash</th></tr></thead><tbody>";
+									"<th>Size</th><th>Modified</th><th>Hash</th><th>Integrity</th></tr></thead><tbody>";
 
 					var countFiles = 0;
 					var countDirs = 0;
@@ -1129,7 +1150,7 @@
 									"<td><span class='file_folder'><a href=\"#\" class=\"folder_link\" id=\"" + SearchLocationsID[index] + "\"> " + SearchFilenames[index][3] + "</a></span></td>" + 
 									locationHtml + 
 									"<td class='size' data-sort='" + SearchFilenames[index][1] + "'>" + bytesToSize( SearchFilenames[index][1] ) + "</td>" + 
-									"<td class='date' data-sort='" + SearchFilenames[index][2] + "'>" + timestamp + "</td>" + "<td class='hash'>" + (SearchFilenames[index][4] || "") + "</td>" + 
+									"<td class='date' data-sort='" + SearchFilenames[index][2] + "'>" + timestamp + "</td>" + "<td class='hash'>" + (SearchFilenames[index][4] || "") + "</td>" + "<td class='integrity'></td>" +
 								"</tr>";
 							currentView.push( { "name": SearchFilenames[index][3], "path": SearchLocationsRaw[index].replace(/\//g,"\\"), "type": "dir", "size": SearchFilenames[index][1], "date": SearchFilenames[index][2] } );
 						}
@@ -1180,15 +1201,16 @@
 
 
 							var timestamp = timestampToDate(SearchFilenames[index][2]);
+							var integrityHtml = integrityStatusToHtml(SearchFilenames[index][5] || "0");
 							table_html += 
 								"<tr>" + 
 									"<td><span class='file'>" + file_tmp + "</span></td>" + 
 									locationHtml + 
 									"<td class='size' data-sort='" + SearchFilenames[index][1] + "'>" + bytesToSize( SearchFilenames[index][1] ) + "</td>" + 
-									"<td class='date' data-sort='" + SearchFilenames[index][2] + "'>" + timestamp + "</td>" + "<td class='hash'>" + (SearchFilenames[index][4] || "") + "</td>" + 
+									"<td class='date' data-sort='" + SearchFilenames[index][2] + "'>" + timestamp + "</td>" + "<td class='hash'>" + (SearchFilenames[index][4] || "") + "</td>" + "<td class='integrity'>" + integrityHtml + "</td>" +
 								"</tr>";
 
-							currentView.push( { "name": SearchFilenames[index][3], "path": SearchLocationsRaw[index].replace(/\//g,"\\"), "type": "file", "size": SearchFilenames[index][1], "date": SearchFilenames[index][2], "hash": SearchFilenames[index][4] || "" } );
+							currentView.push( { "name": SearchFilenames[index][3], "path": SearchLocationsRaw[index].replace(/\//g,"\\"), "type": "file", "size": SearchFilenames[index][1], "date": SearchFilenames[index][2], "hash": SearchFilenames[index][4] || "", "integrity": SearchFilenames[index][5] || "0" } );
 
 						}
 					}
@@ -1280,7 +1302,7 @@
 					table_html += "<span id='parent_folder' class='file_folder'><a href=\"#\" class=\"folder_link\" id=\"" + parent_folders[FolderID] + "\"> [..]</a></span>\n";
 					table_html += "<div id='parent_folder_border'></div>";
 				}
-				table_html += "<table id='files' class='tablesorter" + showParentFolderClass + "'><thead><th>Name</th><th>Size</th><th>Modified</th><th>Hash</th></tr></thead><tbody>\n";
+				table_html += "<table id='files' class='tablesorter" + showParentFolderClass + "'><thead><th>Name</th><th>Size</th><th>Modified</th><th>Hash</th><th>Integrity</th></tr></thead><tbody>\n";
 
 				currentView = [];
 				var countFiles = 0;
@@ -1303,7 +1325,7 @@
 							"<tr>" + 
 								"<td><span class='file_folder'><a href=\"#\" class=\"folder_link\" id=\"" + subdirs[c] + "\"> " + name + "</a></span></td>" + 
 								"<td class='size' data-sort='" + dirSize + "'>" + bytesToSize( dirSize ) + "</td>" + 
-								"<td class='date' data-sort='" + sTmp[2] + "'>" + timestamp + "</td>" + "<td class='hash'>" + (sTmp[3] || "") + "</td>" + 
+								"<td class='date' data-sort='" + sTmp[2] + "'>" + timestamp + "</td>" + "<td class='hash'>" + (sTmp[3] || "") + "</td>" + "<td class='integrity'></td>" +
 							"</tr>\n";
 						currentView.push( { "name": name, "path": currentViewPath, "type": "dir", "size": dirSize, "date": sTmp[2] } );
 					}
@@ -1349,14 +1371,15 @@
 					}
 					
 					var timestamp = timestampToDate(sTmp[2]);
+					var integrityHtml = integrityStatusToHtml(sTmp[4] || "0");
 
 					table_html += 
 						"<tr>" + 
 							"<td><span class='file'>" + file_tmp + "</span></td>" + 
 							"<td class='size' data-sort='" + sTmp[1] + "'>" + bytesToSize( sTmp[1] ) + "</td>" + 
-							"<td class='date' data-sort='" + sTmp[2] + "'>" + timestamp + "</td>" + "<td class='hash'>" + (sTmp[3] || "") + "</td>" + 
+							"<td class='date' data-sort='" + sTmp[2] + "'>" + timestamp + "</td>" + "<td class='hash'>" + (sTmp[3] || "") + "</td>" + "<td class='integrity'>" + integrityHtml + "</td>" +
 						"</tr>\n";
-					currentView.push( { "name": sTmp[0], "path": currentViewPath, "type": "file", "size": sTmp[1], "date": sTmp[2], "hash": sTmp[3] || "" } );
+					currentView.push( { "name": sTmp[0], "path": currentViewPath, "type": "file", "size": sTmp[1], "date": sTmp[2], "hash": sTmp[3] || "", "integrity": sTmp[4] || "0" } );
 				}
 
 				table_html += "</tbody></table>\n";
@@ -1669,6 +1692,23 @@
 			function timestampToIsoString(timestamp){
 				// Convert UNIX timestamp to ISO string (for use in export view)
 				return new Date(timestamp * 1000).toISOString();
+			}
+
+			// Convert integrity status code to display HTML
+			// Status codes: 0=Unknown, 1=Valid, 2=InvalidMagicBytes, 3=DecodingFailed, 4=NotAnImage
+			// These values correspond to the IntegrityStatus enum in the C# code
+			function integrityStatusToHtml(status) {
+				var statusCode = parseInt(status);
+				// Status 1 = Valid (green checkmark)
+				if (statusCode === 1) return "<span class='integrity-valid' title='Valid'>✓</span>";
+				// Status 2 = InvalidMagicBytes (yellow warning - file header doesn't match expected format)
+				if (statusCode === 2) return "<span class='integrity-invalid-magic' title='Invalid magic bytes'>⚠</span>";
+				// Status 3 = DecodingFailed (red X - corrupt or invalid image data)
+				if (statusCode === 3) return "<span class='integrity-failed' title='Decoding failed'>✗</span>";
+				// Status 4 = NotAnImage (dash - file is not an image type)
+				if (statusCode === 4) return "<span class='integrity-unknown' title='Not an image'>—</span>";
+				// Status 0 or unknown = Unknown (no indicator)
+				return "";
 			}
 			
 			
