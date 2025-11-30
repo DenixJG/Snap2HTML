@@ -145,5 +145,19 @@ namespace Snap2HTML.Properties {
                 this["txtTitle"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Configuration.SettingsProviderAttribute(typeof(Snap2HTML.Infrastructure.Settings.PortableSettingsProvider))]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        [global::System.Configuration.SettingsManageabilityAttribute(global::System.Configuration.SettingsManageability.Roaming)]
+        public bool chkEnableHash {
+            get {
+                return ((bool)(this["chkEnableHash"]));
+            }
+            set {
+                this["chkEnableHash"] = value;
+            }
+        }
     }
 }

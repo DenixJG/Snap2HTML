@@ -44,4 +44,9 @@ public class SnapSettings
     /// The root path for file links.
     /// </summary>
     public string LinkRoot { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Whether to compute file hashes during scanning.
+    /// </summary>
+    public bool EnableHashing { get; set; }
 }

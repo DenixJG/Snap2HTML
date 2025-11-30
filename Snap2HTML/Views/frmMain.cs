@@ -174,6 +174,7 @@ public partial class frmMain : Form, IMainFormView
             settings.SkipHiddenItems = !arguments.Exists("hidden");
             settings.SkipSystemItems = !arguments.Exists("system");
             settings.OpenInBrowser = false;
+            settings.EnableHashing = arguments.Exists("hash");
 
             settings.LinkFiles = false;
             if (arguments.Exists("link"))
@@ -270,6 +271,7 @@ public partial class frmMain : Form, IMainFormView
             OpenInBrowser = chkOpenOutput.Checked,
             LinkFiles = chkLinkFiles.Checked,
             LinkRoot = txtLinkRoot.Text,
+            EnableHashing = chkEnableHash.Checked,
         };
 
         StartProcessing(settings);

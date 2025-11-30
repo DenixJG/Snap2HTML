@@ -42,6 +42,7 @@
 			this.chkLinkFiles = new System.Windows.Forms.CheckBox();
 			this.chkHidden = new System.Windows.Forms.CheckBox();
 			this.chkSystem = new System.Windows.Forms.CheckBox();
+			this.chkEnableHash = new System.Windows.Forms.CheckBox();
 			this.cmdCreate = new System.Windows.Forms.Button();
 			this.txtRoot = new System.Windows.Forms.TextBox();
 			this.labelRootFolder = new System.Windows.Forms.Label();
@@ -123,6 +124,7 @@
 			this.tabPage1.Controls.Add(this.chkLinkFiles);
 			this.tabPage1.Controls.Add(this.chkHidden);
 			this.tabPage1.Controls.Add(this.chkSystem);
+			this.tabPage1.Controls.Add(this.chkEnableHash);
 			this.tabPage1.Controls.Add(this.cmdCreate);
 			this.tabPage1.Controls.Add(this.txtRoot);
 			this.tabPage1.Controls.Add(this.labelRootFolder);
@@ -226,6 +228,19 @@
 			this.chkSystem.Text = "Include system items";
 			this.toolTip1.SetToolTip(this.chkSystem, "This applies to both files and folders");
 			this.chkSystem.UseVisualStyleBackColor = true;
+			// 
+			// chkEnableHash
+			// 
+			this.chkEnableHash.AutoSize = true;
+			this.chkEnableHash.Checked = global::Snap2HTML.Properties.Settings.Default.chkEnableHash;
+			this.chkEnableHash.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::Snap2HTML.Properties.Settings.Default, "chkEnableHash", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+			this.chkEnableHash.Location = new System.Drawing.Point(160, 56);
+			this.chkEnableHash.Name = "chkEnableHash";
+			this.chkEnableHash.Size = new System.Drawing.Size(139, 17);
+			this.chkEnableHash.TabIndex = 19;
+			this.chkEnableHash.Text = "Generate file hashes";
+			this.toolTip1.SetToolTip(this.chkEnableHash, "Compute SHA256 hash for each file (slower scanning)");
+			this.chkEnableHash.UseVisualStyleBackColor = true;
 			// 
 			// cmdCreate
 			// 
@@ -605,6 +620,7 @@
         private System.Windows.Forms.CheckBox chkLinkFiles;
         private System.Windows.Forms.CheckBox chkHidden;
         private System.Windows.Forms.CheckBox chkSystem;
+        private System.Windows.Forms.CheckBox chkEnableHash;
 		private System.Windows.Forms.Label label2;
 		private System.Windows.Forms.TextBox txtTitle;
 		private System.Windows.Forms.ToolTip toolTip1;
